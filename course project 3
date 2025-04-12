@@ -1,0 +1,59 @@
+# covid_analysis.py
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load dataset (you can change to your downloaded CSV path)
+url = "https://covid.ourworldindata.org/data/owid-covid-data.csv"
+df = pd.read_csv(url)
+
+# Show basic info
+print("Dataset shape:", df.shape)
+print(df.columns)
+
+# Select only useful columns
+df = df[['location', 'date', 'total_cases', 'new_cases', 'total_deaths', 'new_deaths', 'population']]
+
+# Convert 'date' to datetime
+df['date'] = pd.to_datetime(df['date'])
+
+# Drop rows with missing values
+df = df.dropna(subset=['total_cases', 'total_deaths'])
+
+# Get latest data by country
+latest_data = df.sort_values('date').groupby('location').tail(1)
+
+# Top 10 countries by total cases
+top_cases = latest_data.sort_values(by='total_cases', ascending=False).head(10)
+
+# Plot bar chart for top 10 countries
+plt.figure(figsize=(12, 6))
+plt.bar(top_cases['location'], top_cases['total_cases'], color='skyblue')
+plt.title('Top 10 Countries by Total COVID-19 Cases')
+plt.ylabel('Total Cases')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# Calculate and display death rate per country
+latest_data['death_rate (%)'] = (latest_data['total_deaths'] / latest_data['total_cases']) * 100
+top_death_rate = latest_data.sort_values(by='death_rate (%)', ascending=False).head(10)
+
+# Plot pie chart for death rate
+plt.figure(figsize=(8, 8))
+plt.pie(top_death_rate['death_rate (%)'], labels=top_death_rate['location'], autopct='%1.1f%%')
+plt.title('Top 10 Countries by COVID-19 Death Rate')
+plt.show()
+
+# Trend over time for a specific country (e.g., India)
+india = df[df['location'] == 'India']
+plt.figure(figsize=(12, 6))
+plt.plot(india['date'], india['total_cases'], label='Total Cases')
+plt.plot(india['date'], india['total_deaths'], label='Total Deaths', color='red')
+plt.title('COVID-19 Trend in India')
+plt.xlabel('Date')
+plt.ylabel('Count')
+plt.legend()
+plt.tight_layout()
+plt.show()
